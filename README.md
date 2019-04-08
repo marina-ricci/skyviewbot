@@ -31,3 +31,7 @@ Alternative: `git clone https://github.com/cosmicpudding/skyviewbot.git` to a se
 - ask a tutor
 - `@vamoss` on http://obelics-school.slack.com (`#gcp` channel or DM)
 
+### My results
+#### To post an optical image of the galaxy cluster A1656:
+run skyviewbot.py -s  -field 'A1656' -survey 'DSS' -pos 195. 28.
+
