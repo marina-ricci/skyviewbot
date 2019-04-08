@@ -2,7 +2,7 @@
 # ASTERICS-OBELICS Good Coding Practices (skyviewbot.py)
 # V.A. Moss (vmoss.astro@gmail.com), with suggestions from T.J. Dijkema
 
-__author__ = "YOUR NAME HERE"
+__author__ = "marina ricci"
 __date__ = "$08-apr-2019 12:00:00$"
 __version__ = "0.1"
 
@@ -46,14 +46,40 @@ def skyviewbot():
 	parser = ArgumentParser(formatter_class=RawTextHelpFormatter)
 	### ARGUMENTS HERE!! ###
 	parser.add_argument('-s', '--skyview',
-						default=False,
+						default=True,
 						action = 'store_true',
 						help='Specify whether to download a region from Skyview (default: %(default)s)')
 	parser.add_argument('-f', '--fits_name',
 						default=None,
 						type=str,
 						help='Specify name of a custom fits file to use as input (default: %(default)s)')		
+	parser.add_argument('-field', '--field',
+						default='PKS1657-298',
+						type=str,
+						help='Specify name of a the field to use as input for Skyview (default: %(default)s)')
+	parser.add_argument('-survey', '--survey',
+						default='DSS',
+						type=str,
+						help='Specify name of a survey to use as input for Skyview (default: %(default)s)')
+	parser.add_argument('-pos', '--pos',
+						nargs=2,
+						default=(255.,-29.911),
+						type=float,
+						help='Specify position of the object to use as input for Skyview (default: %(default)s)')
+	parser.add_argument('-fov', '--fov',
+						default=1,
+						type=float,
+						help='Specify survey fov in degree to use as input for Skyview (default: %(default)s)')
+	parser.add_argument('-coord', '--coord',
+						default='J2000',
+						type=str,
+						help='Specify the coordinates system to use as input for Skyview (default: %(default)s)')   
+	parser.add_argument('-d', '--dry_run',
+                        default=False,
+                        action='store_true',
+						help='Dry run: do download from skyview, do not post to google and slack (default: %(default)s')
 	args = parser.parse_args()
+	print (args.pos)
 
 	###################################################################
 
@@ -65,18 +91,19 @@ def skyviewbot():
 	# - maybe the user wants to select on wavelength type, e.g. radio, optical, etc
 	# - what if the FITS file of choice is online somewhere, to be downloaded? 
 	# - what if the user can't get Java working, can you provide an astroquery.Skyview alternative?
-
 	if args.skyview:
 		# All parameters in this should be set properly using argparse
 		# e.g. call_skyview(args.field, args.survey, args.pos, args.fov, args.coord)
-		fits_name = call_skyview('PKS1657-298','DSS',(255.291,-29.911),1,'J2000')
+		#fits_name = call_skyview('PKS1657-298','DSS',(255.291,-29.911),1,'J2000')
+		fits_name = 'results/'+call_skyview(args.field,args.survey,args.pos,args.fov,args.coord)
+		print (fits_name)
 	elif args.fits_name:
 		fits_name = args.fits_name
 	else: 
 		fits_name = 'results/Skyview_PKS1657-298_DSS.fits'
 		
 	# This shouldn't be hardcoded, but set as an input argument in the parser above
-	field = 'PKS1657-298'
+	#field = 'PKS1657-298'
 
 	###################################################################
 
@@ -98,7 +125,7 @@ def skyviewbot():
 
 	# Construct the figure
 	f = aplpy.FITSFigure(fits_name,figsize=(10,8))
-	plt.title(field)
+	plt.title(args.field)
 	f.show_colorscale(cmap=cmap_name,stretch='linear')
 	f.ticks.set_color('k')
 	if colorbar:
@@ -120,7 +147,7 @@ def skyviewbot():
 	# - what happens if something goes wrong with the image upload? 
 
 	img_path = 'results/'+img_name
-	image_id = upload_to_google(img_path)
+	image_id = upload_to_google(img_path,dry_run=args.dry_run)
 
 	###################################################################
 
@@ -135,12 +162,12 @@ def skyviewbot():
 	# Note: if you add more options, you need to modify also send_to_slack()
 
 	msg_color = '#3D99DD' # Little known fact: this colour is known as Celestial Blue 
-	msg_text = 'PKS1657-298 is a great galaxy, maybe the best galaxy.' # 1707.01542
-	slack_id = '???' # This should be your own Slack ID, if you're testing the code
+	msg_text = 'Galaxy clusters are awesome.' # 1707.01542
+	slack_id = 'mricci' # This should be your own Slack ID, if you're testing the code
 
 	# Check for Slack ID
 	if slack_id != '???':
-		send_to_slack(msg_color, msg_text, field, slack_id, image_id)
+		send_to_slack(msg_color, msg_text, args.field, slack_id, image_id,dry_run=args.dry_run)
 	else:
 		print('You should change the ??? to be your Slack ID before posting! Exiting...')
 		sys.exit()
